@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Цифровой детектив: Миссия «Безопасный Интернет»</title>
+<style>
+  :root{
+    --bg1:#EAF3FF; --bg2:#DCEBFF;
+    --card:#FFFFFF;
+    --ink:#1F3B57; --ink-soft:#5A7291;
+    --gold:#F5B942; --gold-dark:#D89A1E;
+    --teal:#2EC4B6; --teal-soft:#E3FBF8;
+    --blue:#4F8FE8; --blue-soft:#E9F2FF;
+    --amber:#FF7B54; --amber-soft:#FFEFE8;
+    --green:#3CB878; --green-soft:#E4F8ED;
+    --red:#FF5C5C; --red-soft:#FFE7E7;
+    --level-color:#2EC4B6; --level-soft:#E3FBF8;
+    --radius:20px;
+    --shadow:0 10px 26px rgba(31,59,87,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Segoe UI','Trebuchet MS',Verdana,sans-serif;
+    background:
+      radial-gradient(circle at 10% 6%, #FFF3D6 0%, transparent 38%),
+      radial-gradient(circle at 92% 88%, #D6F5F0 0%, transparent 45%),
+      linear-gradient(180deg,var(--bg1),var(--bg2));
+    min-height:100vh; color:var(--ink);
+    display:flex; justify-content:center; padding:14px;
+  }
+  #app{width:100%;max-width:640px;display:flex;flex-direction:column;min-height:calc(100vh - 28px);}
+  .screen{display:none;flex-direction:column;flex:1;animation:fadeIn .35s ease;}
+  .screen.active{display:flex;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  /* ---- заставка ---- */
+  #screen-start{align-items:center;justify-content:center;text-align:center;gap:16px;padding:16px 6px;}
+  .badge-icon{width:118px;height:118px;}
+  #screen-start h1{font-size:24px;font-weight:900;margin:0;line-height:1.3;}
+  #screen-start .tagline{background:var(--card);border-radius:999px;padding:6px 16px;font-weight:800;font-size:13px;color:var(--gold-dark);box-shadow:var(--shadow);}
+  #screen-start p.sub{font-size:15.5px;color:var(--ink-soft);margin:0;max-width:440px;font-weight:600;}
+  .info-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+  .chip{background:var(--card);border-radius:999px;padding:8px 14px;font-weight:700;font-size:13px;box-shadow:var(--shadow);}
+  .cases-preview{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;}
+  .case-card{background:var(--card);border-radius:16px;padding:11px 13px;box-shadow:var(--shadow);width:148px;text-align:left;}
+  .case-card .dot{width:11px;height:11px;border-radius:50%;display:inline-block;margin-right:6px;}
+  .case-card b{font-size:13px;display:block;margin-top:4px;}
+  .case-card span{font-size:11.5px;color:var(--ink-soft);font-weight:600;}
+
+  .btn{border:none;border-radius:16px;padding:16px 24px;font-family:inherit;font-weight:800;font-size:16.5px;cursor:pointer;box-shadow:var(--shadow);transition:transform .12s ease;color:#fff;}
+  .btn:active{transform:scale(0.96);}
+  .btn-primary{background:linear-gradient(135deg,var(--teal),#1FA79B);}
+  .btn-secondary{background:linear-gradient(135deg,var(--blue),#3A78D1);}
+  .btn-ghost{background:var(--card);color:var(--ink);border:2px solid #DDE8F5;}
+  .btn-wide{width:100%;}
+
+  /* ---- шапка миссии ---- */
+  #screen-task{gap:14px;}
+  .top-bar{background:var(--card);border-radius:var(--radius);padding:12px 16px;box-shadow:var(--shadow);}
+  .top-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .case-badge{display:flex;align-items:center;gap:6px;font-weight:800;font-size:13px;background:var(--level-soft);color:var(--level-color);padding:6px 12px;border-radius:999px;}
+  .top-tools{display:flex;align-items:center;gap:8px;}
+  .sound-toggle{border:none;background:#EEF3FB;border-radius:10px;width:34px;height:34px;font-size:16px;cursor:pointer;}
+  .task-counter{font-weight:800;font-size:13px;color:var(--ink-soft);}
+  .progress-track{width:100%;height:12px;background:#EEF3FB;border-radius:999px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--level-color));border-radius:999px;transition:width .35s ease;}
+
+  .task-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;flex:1;display:flex;flex-direction:column;gap:15px;}
+  .task-type-label{font-size:12px;font-weight:800;color:var(--level-color);display:flex;align-items:center;gap:6px;}
+  .task-question{font-size:18.5px;font-weight:800;line-height:1.4;}
+
+  /* TF персонаж */
+  .speaker-row{display:flex;align-items:center;gap:10px;background:#F7FAFF;border-radius:14px;padding:10px 12px;}
+  .speaker-avatar{font-size:26px;}
+  .speaker-name{font-weight:800;font-size:13px;color:var(--ink-soft);}
+  .tf-row{display:flex;gap:12px;}
+  .tf-btn{flex:1;padding:17px 8px;border-radius:16px;border:2px solid #E3EBF7;background:#F7FAFF;font-weight:800;font-size:16.5px;cursor:pointer;color:var(--ink);font-family:inherit;}
+  .tf-btn:active{transform:scale(0.97);}
+
+  /* Drag & drop */
+  .sort-pool{display:flex;flex-wrap:wrap;gap:10px;min-height:44px;position:relative;}
+  .drag-chip{padding:10px 14px;border-radius:12px;background:var(--blue-soft);border:2px solid #CFE2FC;font-weight:700;font-size:14px;color:var(--ink);cursor:grab;touch-action:none;user-select:none;position:relative;z-index:2;}
+  .drag-chip.dragging{z-index:50;box-shadow:0 12px 22px rgba(31,59,87,0.28);cursor:grabbing;}
+  .drag-chip.placed{visibility:hidden;pointer-events:none;}
+  .sort-bins{display:flex;gap:10px;}
+  .sort-bin{flex:1;background:#F7FAFF;border:3px dashed #CBD9EE;border-radius:14px;padding:10px;min-height:120px;transition:background .15s,border-color .15s;}
+  .sort-bin.hover{background:var(--teal-soft);border-color:var(--teal);}
+  .sort-bin.flash-bad{background:var(--red-soft);border-color:var(--red);}
+  .sort-bin h4{margin:0 0 8px 0;font-size:14px;font-weight:800;text-align:center;}
+  .sort-bin-items{display:flex;flex-direction:column;gap:6px;}
+  .sort-bin-item{background:var(--green-soft);color:#2C7D53;font-weight:700;font-size:12.5px;padding:6px 8px;border-radius:8px;}
+
+  /* Соответствие */
+  .match-cols{display:flex;gap:10px;}
+  .match-col{flex:1;display:flex;flex-direction:column;gap:8px;}
+  .match-btn{padding:10px;border-radius:12px;border:2px solid #E3EBF7;background:#F7FAFF;font-weight:700;font-size:13px;cursor:pointer;text-align:left;color:var(--ink);font-family:inherit;line-height:1.3;}
+  .match-btn.selected{background:var(--gold);border-color:var(--gold-dark);}
+  .match-btn.matched{background:var(--green-soft);border-color:var(--green);color:#2C7D53;pointer-events:none;}
+  .shake{animation:shake .35s;}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+  .flash-red{animation:flashRed .4s;}
+  @keyframes flashRed{0%,100%{background:#F7FAFF;}50%{background:var(--red-soft);}}
+
+  /* Диалог-квест */
+  .chat-window{display:flex;flex-direction:column;gap:10px;}
+  .chat-contact{display:flex;align-items:center;gap:8px;background:#F7FAFF;border-radius:12px;padding:8px 12px;}
+  .chat-contact .av{font-size:22px;}
+  .chat-contact b{font-size:13.5px;}
+  .chat-bubble{max-width:85%;padding:10px 14px;border-radius:16px;font-weight:700;font-size:14px;line-height:1.4;}
+  .chat-bubble.in{background:#EEF3FB;border-bottom-left-radius:4px;align-self:flex-start;}
+  .chat-bubble.out{background:var(--teal-soft);color:#1B7A70;border-bottom-right-radius:4px;align-self:flex-end;}
+  .chat-options{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+  .chat-opt-btn{text-align:left;padding:12px 14px;border-radius:14px;border:2px solid #E3EBF7;background:#F7FAFF;font-weight:700;font-size:14px;color:var(--ink);cursor:pointer;font-family:inherit;}
+
+  /* Обратная связь */
+  .feedback{border-radius:14px;padding:14px 16px;font-weight:700;font-size:14px;display:none;flex-direction:column;gap:6px;}
+  .feedback.show{display:flex;}
+  .feedback.ok{background:var(--green-soft);color:#2C7D53;}
+  .feedback.bad{background:var(--red-soft);color:#C2453D;}
+  .feedback .fb-title{font-size:15px;font-weight:900;}
+  .next-wrap{display:flex;justify-content:flex-end;}
+
+  /* ---- результат ---- */
+  #screen-result{align-items:center;justify-content:center;text-align:center;gap:14px;padding:10px 4px;}
+  .stamp{width:126px;height:126px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;box-shadow:var(--shadow);background:var(--card);border:4px solid var(--gold);}
+  .stamp b{font-size:34px;font-weight:900;line-height:1;}
+  .stamp span{font-size:11.5px;font-weight:700;color:var(--ink-soft);}
+  #screen-result h2{margin:0;font-size:21px;font-weight:900;}
+  #screen-result p.msg{margin:0;font-size:14.5px;color:var(--ink-soft);font-weight:700;max-width:420px;}
+  .stat-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .stat-card{background:var(--card);border-radius:14px;padding:10px 16px;box-shadow:var(--shadow);min-width:88px;}
+  .stat-card b{display:block;font-size:19px;font-weight:900;}
+  .stat-card span{font-size:11px;color:var(--ink-soft);font-weight:700;}
+  .result-actions{display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px;margin-top:4px;}
+
+  /* Ошибки */
+  #screen-errors{gap:12px;}
+  .errors-header{display:flex;align-items:center;justify-content:space-between;}
+  .error-item{background:var(--card);border-radius:14px;padding:14px;box-shadow:var(--shadow);text-align:left;}
+  .error-item .eb-level{font-size:11px;font-weight:800;color:var(--level-color);margin-bottom:4px;}
+  .error-item .eb-q{font-weight:800;font-size:14px;margin-bottom:6px;}
+  .error-item .eb-a{font-size:13px;color:#2C7D53;font-weight:700;background:var(--green-soft);padding:8px 10px;border-radius:10px;}
+  .errors-list{display:flex;flex-direction:column;gap:10px;overflow-y:auto;}
+  .no-errors{background:var(--card);border-radius:16px;padding:24px;box-shadow:var(--shadow);font-weight:800;}
+
+  @media (max-width:380px){
+    #screen-start h1{font-size:20px;}
+    .task-question{font-size:16.5px;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ЗАСТАВКА -->
+  <div class="screen active" id="screen-start">
+    <svg class="badge-icon" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="60" cy="60" r="58" fill="#FFF3D6"/>
+      <rect x="34" y="42" width="52" height="40" rx="14" fill="#2EC4B6"/>
+      <circle cx="50" cy="62" r="7" fill="#fff"/><circle cx="70" cy="62" r="7" fill="#fff"/>
+      <circle cx="50" cy="62" r="3" fill="#1F3B57"/><circle cx="70" cy="62" r="3" fill="#1F3B57"/>
+      <rect x="44" y="75" width="32" height="6" rx="3" fill="#fff"/>
+      <rect x="30" y="34" width="60" height="10" rx="5" fill="#1F3B57"/>
+      <circle cx="94" cy="88" r="14" fill="none" stroke="#F5B942" stroke-width="5"/>
+      <line x1="103" y1="97" x2="112" y2="106" stroke="#F5B942" stroke-width="5" stroke-linecap="round"/>
+      <rect x="18" y="56" width="10" height="20" rx="5" fill="#2EC4B6"/>
+      <rect x="92" y="56" width="10" height="20" rx="5" fill="#2EC4B6"/>
+    </svg>
+    <div class="tagline">🕵️ СОВЕРШЕННО СЕКРЕТНО</div>
+    <h1>Цифровой детектив:<br>Миссия «Безопасный Интернет»</h1>
+    <p class="sub">Привет! Я детектив Байт 🤖🔍. Мне нужен напарник, чтобы раскрыть 3 дела о безопасности в сети. Готов приступить к расследованию?</p>
+    <div class="info-chips">
+      <div class="chip">📁 30 заданий</div>
+      <div class="chip">⏱️ ~20 минут</div>
+      <div class="chip">🎖️ Оценка 1–10</div>
+    </div>
+    <div class="cases-preview">
+      <div class="case-card"><span class="dot" style="background:#2EC4B6"></span><b>Дело №1</b><span>Вежливый код</span></div>
+      <div class="case-card"><span class="dot" style="background:#4F8FE8"></span><b>Дело №2</b><span>Цифровая крепость</span></div>
+      <div class="case-card"><span class="dot" style="background:#FF7B54"></span><b>Дело №3</b><span>Тайна незнакомца</span></div>
+    </div>
+    <button class="btn btn-primary btn-wide" id="btn-start" style="max-width:280px;">Начать расследование 🚀</button>
+  </div>
+
+  <!-- ЗАДАНИЕ -->
+  <div class="screen" id="screen-task">
+    <div class="top-bar">
+      <div class="top-row">
+        <div class="case-badge" id="case-badge">🟢 Дело №1: Вежливый код</div>
+        <div class="top-tools">
+          <button class="sound-toggle" id="btn-sound" title="Звук">🔊</button>
+        </div>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%;"></div></div>
+      <div class="top-row" style="margin-top:6px;margin-bottom:0;">
+        <div class="task-counter" id="task-counter">Улика 1 из 30</div>
+        <div class="task-counter" id="score-counter">🔎 0</div>
+      </div>
+    </div>
+
+    <div class="task-card">
+      <div class="task-type-label" id="task-type-label">🚩 ВЕРНО ИЛИ НЕВЕРНО</div>
+      <div class="task-question" id="task-question">Вопрос</div>
+      <div id="task-body"></div>
+      <div class="feedback" id="feedback">
+        <div class="fb-title" id="fb-title"></div>
+        <div id="fb-text"></div>
+      </div>
+      <div class="next-wrap">
+        <button class="btn btn-secondary" id="btn-next" style="display:none;">Следующая улика →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- РЕЗУЛЬТАТ -->
+  <div class="screen" id="screen-result">
+    <div class="stamp"><b id="result-grade">10</b><span>из 10</span></div>
+    <h2 id="result-title">Дело раскрыто!</h2>
+    <p class="msg" id="result-msg">Ты отлично разбираешься в правилах безопасности в сети!</p>
+    <div class="stat-row">
+      <div class="stat-card"><b id="stat-correct">30</b><span>улик найдено</span></div>
+      <div class="stat-card"><b id="stat-percent">100%</b><span>результат</span></div>
+      <div class="stat-card"><b id="stat-total">30</b><span>всего заданий</span></div>
+    </div>
+    <div class="result-actions">
+      <button class="btn btn-secondary btn-wide" id="btn-show-errors">Разбор ложных следов 🔍</button>
+      <button class="btn btn-primary btn-wide" id="btn-retry">Новое расследование 🔄</button>
+    </div>
+  </div>
+
+  <!-- ОШИБКИ -->
+  <div class="screen" id="screen-errors">
+    <div class="errors-header">
+      <h2 style="margin:0;font-size:20px;">Разбор ложных следов</h2>
+      <button class="btn btn-ghost" id="btn-back-result">← Назад</button>
+    </div>
+    <div class="errors-list" id="errors-list"></div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ==================== УРОВНИ (ДЕЛА) ==================== */
+  var LEVELS = [
+    {id:1, name:"Дело №1: Вежливый код",       icon:"🟢", color:"#2EC4B6", soft:"#E3FBF8"},
+    {id:2, name:"Дело №2: Цифровая крепость",  icon:"🔵", color:"#4F8FE8", soft:"#E9F2FF"},
+    {id:3, name:"Дело №3: Тайна незнакомца",   icon:"🟠", color:"#FF7B54", soft:"#FFEFE8"}
+  ];
+  function levelOf(i){ return LEVELS[Math.floor(i/10)]; }
+
+  /* ==================== ЗАДАНИЯ (30) ==================== */
+  var TASKS = [
+    /* ---- ДЕЛО №1: Вежливый код (1-10) ---- */
+    {type:"drag", q:"Раздели фразы на «Вежливо» и «Грубо».",
+      bins:[{key:"a",label:"Вежливо",emoji:"🙂"},{key:"b",label:"Грубо",emoji:"😠"}],
+      items:[
+        {text:"Пожалуйста, помоги мне", bin:"a"},
+        {text:"УЙДИ ОТСЮДА, ТЫ МНЕ МЕШАЕШЬ", bin:"b"},
+        {text:"Спасибо за игру!", bin:"a"},
+        {text:"ФУ, ИГРАЕШЬ КАК МАЛЫШ", bin:"b"},
+        {text:"Извини, я не хотел обидеть", bin:"a"},
+        {text:"ОТСТАНЬ, НЕ МЕШАЙ МНЕ", bin:"b"}
+      ], explain:"Вежливые слова помогают общаться, а грубые — обижают собеседника."},
+    {type:"tf", speaker:"Байт", avatar:"🤖", q:"Если писать сообщение ЗАГЛАВНЫМИ БУКВАМИ, это выглядит как крик.", answer:true,
+      explain:"Капс в переписке воспринимается как крик — это невежливо."},
+    {type:"match", q:"Соедини ситуацию и правильную реакцию.",
+      pairs:[
+        {left:"Друг прислал смешную картинку", right:"Посмеяться вместе и поставить лайк"},
+        {left:"Одноклассник ошибся в слове в чате", right:"Не смеяться, вежливо промолчать"},
+        {left:"Тебя пригласили в новую игру", right:"Поблагодарить за приглашение"},
+        {left:"Кто-то пишет заглавными буквами и грубит", right:"Не отвечать тем же, оставаться спокойным"}
+      ], explain:"Вежливая реакция помогает сохранить хорошее общение."},
+    {type:"dialog", contact:"Аружан", avatar:"👧", message:"Привет! А почему ты не ответил вчера в игре?",
+      options:["«Отстань, не мешай»","«Привет! Извини, я не увидел сообщение, отвечу в следующий раз»","(промолчать)","«ТЫ ЧТО, СЛЕПОЙ?»"],
+      correct:1, explain:"Вежливое объяснение и извинение — лучший способ ответить другу."},
+    {type:"drag", q:"Раздели фразы на «Вежливо» и «Грубо».",
+      bins:[{key:"a",label:"Вежливо",emoji:"🙂"},{key:"b",label:"Грубо",emoji:"😠"}],
+      items:[
+        {text:"Давай ты выберешь первым", bin:"a"},
+        {text:"МОЯ ОЧЕРЕДЬ, ОТОЙДИ", bin:"b"},
+        {text:"Прости, я опоздал к игре", bin:"a"},
+        {text:"ИГРАЕШЬ ПЛОХО, УДАЛИСЬ", bin:"b"},
+        {text:"Здорово получилось!", bin:"a"},
+        {text:"СКУЧНО С ТОБОЙ", bin:"b"}
+      ], explain:"Добрые слова делают общение приятным для всех."},
+    {type:"tf", speaker:"Ерлан", avatar:"👦", q:"Если друг не сразу ответил в чате, можно сразу писать ему обидные слова.", answer:false,
+      explain:"Друг мог быть занят — не стоит сразу грубить, лучше подождать ответа."},
+    {type:"match", q:"Соедини ситуацию и правильную реакцию.",
+      pairs:[
+        {left:"Учитель написал домашнее задание в чате класса", right:"Поблагодарить и записать задание"},
+        {left:"Одноклассник поделился хорошей новостью", right:"Порадоваться вместе с ним"},
+        {left:"В чате кто-то написал много смайликов подряд", right:"Не обязательно отвечать так же"},
+        {left:"Тебе написали в чате поздно вечером", right:"Ответить утром, если так решили родители"}
+      ], explain:"Правильная реакция зависит от ситуации, но всегда остаётся вежливой."},
+    {type:"dialog", contact:"Новенький", avatar:"🙂", message:"Привет, я новенький в школе. Можно с вами играть?",
+      options:["«Нет, уходи»","«Конечно, привет! Будем рады»","(промолчать)","«Сначала докажи, что ты классный»"],
+      correct:1, explain:"Приветливость и дружелюбие помогают новеньким быстрее освоиться."},
+    {type:"drag", q:"Раздели фразы на «Вежливо» и «Грубо».",
+      bins:[{key:"a",label:"Вежливо",emoji:"🙂"},{key:"b",label:"Грубо",emoji:"😠"}],
+      items:[
+        {text:"Спасибо, что подождал", bin:"a"},
+        {text:"ДОЛГО ЕЩЁ? ШЕВЕЛИСЬ БЫСТРЕЕ", bin:"b"},
+        {text:"Можно мне присоединиться?", bin:"a"},
+        {text:"НЕ ЛЕЗЬ, ТЫ ЛИШНИЙ", bin:"b"},
+        {text:"Хорошая идея!", bin:"a"},
+        {text:"ФУ, СКУЧНАЯ ИГРА, УДАЛИ ЕЁ", bin:"b"}
+      ], explain:"Вежливая просьба и похвала — простые, но важные привычки."},
+    {type:"tf", speaker:"Дана", avatar:"👧", q:"В школьном чате достаточно поздороваться только с учителем, а с одноклассниками не обязательно.", answer:false,
+      explain:"Вежливость важна со всеми участниками чата, а не только с учителем."},
+
+    /* ---- ДЕЛО №2: Цифровая крепость (11-20) ---- */
+    {type:"match", q:"Соедини ситуацию и правильное действие.",
+      pairs:[
+        {left:"Одноклассник в игре просит твой пароль, «чтобы помочь»", right:"Отказать, пароль никому не говорим"},
+        {left:"Незнакомый пользователь спрашивает, где ты живёшь", right:"Не отвечать и сказать взрослым"},
+        {left:"Сайт просит придумать пароль для регистрации", right:"Придумать сложный пароль и хранить в секрете"},
+        {left:"Родители разрешили сказать бабушке телефон по видеозвонку", right:"Это можно, если разрешили родители"}
+      ], explain:"Пароль — это секрет. Личные данные можно сообщать только тем, кому разрешили родители."},
+    {type:"dialog", contact:"GamerPro2012", avatar:"🎮", message:"Привет! Скажи мне пароль от твоего аккаунта, а я подарю тебе крутой скин!",
+      options:["Написать пароль сразу","«Нет, пароль — это секрет, я его никому не говорю»","Написать половину пароля","Спросить у него его пароль взамен"],
+      correct:1, explain:"Пароль нельзя говорить никому, даже за обещанный подарок."},
+    {type:"drag", q:"Раздели данные на «Личное» и «Публичное».",
+      bins:[{key:"a",label:"Личное",emoji:"🔒"},{key:"b",label:"Публичное",emoji:"🌍"}],
+      items:[
+        {text:"Пароль от почты", bin:"a"},
+        {text:"Любимый мультфильм", bin:"b"},
+        {text:"Домашний адрес", bin:"a"},
+        {text:"Любимый цвет", bin:"b"},
+        {text:"Номер школы, в которой учишься", bin:"a"},
+        {text:"Любимое хобби", bin:"b"}
+      ], explain:"Личные данные нужно защищать и не рассказывать чужим людям."},
+    {type:"tf", speaker:"Байт", avatar:"🤖", q:"Пароль от аккаунта можно сказать родителям, но не одноклассникам.", answer:true,
+      explain:"Родители помогают следить за безопасностью, а одноклассникам пароль знать не нужно."},
+    {type:"match", q:"Соедини ситуацию и правильное действие.",
+      pairs:[
+        {left:"Незнакомец в игре пишет: «Скажи адрес, пришлю подарок»", right:"Не говорить адрес и рассказать взрослым"},
+        {left:"Сайт для входа просит придумать пароль", right:"Ввести личный пароль и никому не показывать"},
+        {left:"В игре просят придумать никнейм", right:"Придумать вымышленное имя, а не настоящее"},
+        {left:"Друг из класса просит телефон для школьных дел", right:"Спросить разрешения у родителей"}
+      ], explain:"Прежде чем делиться данными, стоит подумать и спросить взрослых."},
+    {type:"dialog", contact:"Друг_из_игры99", avatar:"🎲", message:"Как называется твоя школа и в каком ты классе? Хочу прислать подарок туда!",
+      options:["Написать номер школы и класс","«Извини, я не рассказываю о школе незнакомым людям в интернете»","Написать только класс","Спросить, зачем ему это, и потом написать"],
+      correct:1, explain:"Незнакомцам нельзя сообщать данные о школе, даже если обещают подарок."},
+    {type:"drag", q:"Раздели данные на «Личное» и «Публичное».",
+      bins:[{key:"a",label:"Личное",emoji:"🔒"},{key:"b",label:"Публичное",emoji:"🌍"}],
+      items:[
+        {text:"Домашний адрес", bin:"a"},
+        {text:"Любимая игра", bin:"b"},
+        {text:"Номер телефона", bin:"a"},
+        {text:"Любимый мультфильм", bin:"b"},
+        {text:"Пароль от почты", bin:"a"},
+        {text:"Цвет твоего рюкзака", bin:"b"}
+      ], explain:"Адрес, телефон и пароли — это данные, которые нужно скрывать от чужих."},
+    {type:"tf", speaker:"Ерлан", avatar:"👦", q:"Домашний адрес можно писать в профиле игры, чтобы друзья видели, где ты живёшь.", answer:false,
+      explain:"Домашний адрес — личные данные, их нельзя публиковать в интернете."},
+    {type:"match", q:"Соедини ситуацию и правильное действие.",
+      pairs:[
+        {left:"Приложение просит показывать, где ты находишься", right:"Спросить у родителей, прежде чем разрешать"},
+        {left:"Друг просит помочь узнать пароль одноклассника", right:"Отказаться — это плохой поступок"},
+        {left:"Ты придумываешь пароль для новой игры", right:"Сделать пароль длинным и непохожим на имя"},
+        {left:"Незнакомец говорит, что он «из твоей школы», и просит адрес", right:"Не верить и рассказать взрослым"}
+      ], explain:"Осторожность и разговор со взрослыми защищают от многих проблем."},
+    {type:"dialog", contact:"Anonimus_007", avatar:"❓", message:"Пришли мне фото своей комнаты и напиши, во сколько ты дома один(одна).",
+      options:["Прислать фото и время","«Я не буду это обсуждать с незнакомыми людьми» и рассказать взрослым","Спросить, зачем это нужно","Прислать только часть информации"],
+      correct:1, explain:"Такие вопросы от незнакомцев — тревожный сигнал. Об этом нужно сразу рассказать взрослым."},
+
+    /* ---- ДЕЛО №3: Тайна незнакомца (21-30) ---- */
+    {type:"drag", q:"Раздели ситуации на «Безопасно» и «Опасно».",
+      bins:[{key:"a",label:"Безопасно",emoji:"✅"},{key:"b",label:"Опасно",emoji:"⚠️"}],
+      items:[
+        {text:"Ссылка от незнакомца с обещанием приза", bin:"b"},
+        {text:"Видео на канале, который посоветовал учитель", bin:"a"},
+        {text:"Сообщение «Скачай файл, там сюрприз»", bin:"b"},
+        {text:"Игра, в которую играет весь класс", bin:"a"},
+        {text:"Просьба незнакомца прислать фото", bin:"b"},
+        {text:"Общение с другом из своего класса", bin:"a"}
+      ], explain:"Незнакомые ссылки и странные просьбы — повод насторожиться и спросить взрослых."},
+    {type:"tf", speaker:"Незнакомец в сети", avatar:"🕵️", q:"Если незнакомец в игре кажется дружелюбным, можно сразу согласиться на встречу в реальной жизни.", answer:false,
+      explain:"Даже дружелюбный на вид незнакомец может представлять опасность. На встречу нельзя соглашаться без взрослых."},
+    {type:"match", q:"Соедини ситуацию и правильную реакцию.",
+      pairs:[
+        {left:"Одноклассники в чате смеются и обзывают другого ученика", right:"Это кибербуллинг — нужно сказать взрослым"},
+        {left:"Ты нашёл красивый рисунок и хочешь выдать его за свой", right:"Нельзя, нужно указать настоящего автора"},
+        {left:"Незнакомец пишет неприятные сообщения", right:"Заблокировать и рассказать взрослым"},
+        {left:"Одноклассник просит сдать твой доклад как свой", right:"Отказать — это нечестно, плагиат"}
+      ], explain:"Честность и забота о других — важные правила и в интернете тоже."},
+    {type:"dialog", contact:"«Друг папы»", avatar:"❔", message:"Привет! Я новый друг твоего папы. Он попросил узнать твой адрес, чтобы я мог заехать и передать подарок.",
+      options:["Написать адрес, раз это друг папы","«Я не буду писать адрес незнакомым людям, спрошу у папы» и рассказать взрослым","Спросить, как его зовут, и потом написать адрес","Написать примерный район"],
+      correct:1, explain:"Даже если кто-то называет себя другом родителей, адрес незнакомцам сообщать нельзя — сначала нужно спросить у взрослых."},
+    {type:"drag", q:"Раздели ситуации на «Безопасно» и «Опасно».",
+      bins:[{key:"a",label:"Безопасно",emoji:"✅"},{key:"b",label:"Опасно",emoji:"⚠️"}],
+      items:[
+        {text:"«Ты выиграл приз, введи данные карты родителей»", bin:"b"},
+        {text:"Общение с одноклассником о домашнем задании", bin:"a"},
+        {text:"Просьба скачать неизвестную программу", bin:"b"},
+        {text:"Видео от проверенного детского канала", bin:"a"},
+        {text:"Незнакомец пишет: «Давай дружить, скажи где живёшь»", bin:"b"},
+        {text:"Совместная игра с другом из кружка", bin:"a"}
+      ], explain:"Просьбы о личных данных или деньгах — всегда повод быть осторожным."},
+    {type:"tf", speaker:"Дана", avatar:"👧", q:"Кибербуллинг — это когда кого-то обижают, дразнят или унижают в интернете.", answer:true,
+      explain:"Кибербуллинг — это травля в сети, и с ней обязательно нужно бороться."},
+    {type:"match", q:"Соедини ситуацию и правильную реакцию.",
+      pairs:[
+        {left:"Ты скачал чужую презентацию для доклада", right:"Указать автора или переделать своими словами"},
+        {left:"Прислали ссылку на «бесплатный взлом игры»", right:"Не переходить — это может быть обман или вирус"},
+        {left:"Одноклассник пишет обидные сообщения другому", right:"Не участвовать, сообщить взрослым"},
+        {left:"Хочешь использовать чужую музыку в своём видео", right:"Указать автора музыки или спросить разрешения"}
+      ], explain:"Уважение к чужому труду и осторожность защищают тебя и других."},
+    {type:"dialog", contact:"SuperPrize_Bot", avatar:"🤑", message:"Поздравляем! Ты выиграл 1000 алмазов! Перейди по ссылке и введи данные карты родителей, чтобы получить приз!",
+      options:["Перейти по ссылке и ввести данные","«Это подозрительно, не буду переходить» и рассказать взрослым","Переслать ссылку другу, чтобы проверить","Ввести только часть данных"],
+      correct:1, explain:"Обещания больших призов за ввод данных карты — классический обман. Нужно рассказать взрослым."},
+    {type:"drag", q:"Раздели ситуации на «Безопасно» и «Опасно».",
+      bins:[{key:"a",label:"Безопасно",emoji:"✅"},{key:"b",label:"Опасно",emoji:"⚠️"}],
+      items:[
+        {text:"Сообщение с угрозами от незнакомого игрока", bin:"b"},
+        {text:"Совместный проект с одноклассником в документе", bin:"a"},
+        {text:"Ссылка «Скачай бесплатно игру без вирусов 100%»", bin:"b"},
+        {text:"Видеозвонок с бабушкой при родителях", bin:"a"},
+        {text:"Просьба незнакомца прислать код по SMS", bin:"b"},
+        {text:"Общение в школьном чате класса", bin:"a"}
+      ], explain:"Угрозы, подозрительные ссылки и просьбы прислать коды — явные признаки опасности."},
+    {type:"tf", speaker:"Байт", avatar:"🤖", q:"Если взять чужой текст из интернета для доклада без указания автора — это нормально, ведь текст уже есть в сети.", answer:false,
+      explain:"Это плагиат — нечестный поступок. Нужно указывать автора или писать своими словами."}
+  ];
+
+  /* ==================== СОСТОЯНИЕ ==================== */
+  var state = { idx:0, results:[], soundOn:true, timerId:null, timerSec:20*60 };
+  var audioCtx = null;
+
+  var $ = function(id){return document.getElementById(id);};
+  var screens = { start:$("screen-start"), task:$("screen-task"), result:$("screen-result"), errors:$("screen-errors") };
+  function showScreen(name){
+    Object.keys(screens).forEach(function(k){ screens[k].classList.remove("active"); });
+    screens[name].classList.add("active");
+  }
+
+  /* ==================== ЗВУК ==================== */
+  function ensureAudio(){
+    if(!audioCtx){
+      try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx=null; }
+    }
+  }
+  function beep(freq, dur, type){
+    if(!state.soundOn || !audioCtx) return;
+    try{
+      var o = audioCtx.createOscillator();
+      var g = audioCtx.createGain();
+      o.type = type||"sine";
+      o.frequency.value = freq;
+      g.gain.value = 0.08;
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+dur);
+      o.stop(audioCtx.currentTime+dur);
+    }catch(e){}
+  }
+  function soundCorrect(){ beep(880,0.12); setTimeout(function(){beep(1175,0.16);},110); }
+  function soundWrong(){ beep(180,0.25,"sawtooth"); }
+
+  $("btn-sound").addEventListener("click", function(){
+    state.soundOn = !state.soundOn;
+    $("btn-sound").textContent = state.soundOn ? "🔊" : "🔇";
+  });
+
+  /* ==================== ТАЙМЕР (20 минут) ==================== */
+  function startTimer(){
+    if(state.timerId) clearInterval(state.timerId);
+    state.timerSec = 20*60;
+    state.timerId = setInterval(function(){
+      state.timerSec--;
+      if(state.timerSec<=0){ clearInterval(state.timerId); }
+    },1000);
+  }
+
+  /* ==================== СТАРТ ==================== */
+  $("btn-start").addEventListener("click", function(){
+    ensureAudio();
+    state.idx=0; state.results=[];
+    startTimer();
+    showScreen("task");
+    renderTask();
+  });
+  $("btn-retry").addEventListener("click", function(){ showScreen("start"); });
+  $("btn-show-errors").addEventListener("click", function(){ renderErrors(); showScreen("errors"); });
+  $("btn-back-result").addEventListener("click", function(){ showScreen("result"); });
+
+  /* ==================== ШАПКА / ПРОГРЕСС ==================== */
+  function updateHeader(){
+    var lv = levelOf(state.idx);
+    var badge = $("case-badge");
+    badge.textContent = lv.icon+" "+lv.name;
+    badge.style.background = lv.soft;
+    badge.style.color = lv.color;
+    document.documentElement.style.setProperty("--level-color", lv.color);
+    document.documentElement.style.setProperty("--level-soft", lv.soft);
+    $("task-counter").textContent = "Улика "+(state.idx+1)+" из "+TASKS.length;
+    var correctSoFar = state.results.filter(function(r){return r && r.correct;}).length;
+    $("score-counter").textContent = "🔎 "+correctSoFar;
+    $("progress-fill").style.width = Math.round((state.idx/TASKS.length)*100)+"%";
+  }
+
+  var TYPE_LABELS = {
+    drag:"🧲 РАССОРТИРУЙ УЛИКИ", tf:"🚩 ВЕРНО ИЛИ НЕВЕРНО",
+    match:"🔗 СОЕДИНИ ПАРЫ", dialog:"💬 ДИАЛОГ-КВЕСТ"
+  };
+
+  /* ==================== РЕНДЕР ЗАДАНИЯ ==================== */
+  function renderTask(){
+    updateHeader();
+    var t = TASKS[state.idx];
+    $("task-type-label").textContent = TYPE_LABELS[t.type];
+    $("task-question").textContent = t.type==="dialog" ? "Выбери правильный ответ в чате." : t.q;
+    $("task-body").innerHTML = "";
+    hideFeedback();
+    $("btn-next").style.display = "none";
+
+    if(t.type==="tf") renderTF(t);
+    else if(t.type==="drag") renderDrag(t);
+    else if(t.type==="match") renderMatch(t);
+    else if(t.type==="dialog") renderDialog(t);
+  }
+
+  function hideFeedback(){ $("feedback").classList.remove("show","ok","bad"); }
+  function showFeedback(ok, title, text){
+    var fb=$("feedback");
+    fb.classList.add("show", ok?"ok":"bad");
+    $("fb-title").textContent = (ok? "✅ ":"❌ ")+title;
+    $("fb-text").textContent = text;
+  }
+  function recordResult(correct,q,explain){
+    state.results[state.idx] = {correct:correct,q:q,explain:explain,level:levelOf(state.idx).name};
+  }
+  function showNext(){ $("btn-next").style.display="inline-block"; }
+  $("btn-next").addEventListener("click", function(){
+    state.idx++;
+    if(state.idx>=TASKS.length){ finishGame(); } else { renderTask(); }
+  });
+
+  /* ---- TF ---- */
+  function renderTF(t){
+    var body = $("task-body");
+    if(t.speaker){
+      var sr = document.createElement("div");
+      sr.className="speaker-row";
+      sr.innerHTML = "<div class='speaker-avatar'>"+t.avatar+"</div><div><div class='speaker-name'>"+t.speaker+" говорит:</div></div>";
+      body.appendChild(sr);
+    }
+    var row = document.createElement("div"); row.className="tf-row";
+    var trueBtn=document.createElement("button"); trueBtn.className="tf-btn"; trueBtn.textContent="✅ Верно";
+    var falseBtn=document.createElement("button"); falseBtn.className="tf-btn"; falseBtn.textContent="❌ Неверно";
+    row.appendChild(trueBtn); row.appendChild(falseBtn); body.appendChild(row);
+    function pick(val){
+      trueBtn.disabled=true; falseBtn.disabled=true;
+      var ok = (val===t.answer);
+      ok? soundCorrect() : soundWrong();
+      recordResult(ok,t.q,t.explain);
+      showFeedback(ok, ok?"Точно!":"Не совсем", t.explain);
+      showNext();
+    }
+    trueBtn.addEventListener("click", function(){pick(true);});
+    falseBtn.addEventListener("click", function(){pick(false);});
+  }
+
+  /* ---- DRAG & DROP (Pointer Events) ---- */
+  function renderDrag(t){
+    var body = $("task-body");
+    var wrap = document.createElement("div");
+    var pool = document.createElement("div"); pool.className="sort-pool";
+    var bins = document.createElement("div"); bins.className="sort-bins";
+    wrap.appendChild(pool); wrap.appendChild(bins); body.appendChild(wrap);
+
+    var binEls = {}; var binList = [];
+    t.bins.forEach(function(bd){
+      var bin = document.createElement("div"); bin.className="sort-bin"; bin.dataset.key=bd.key;
+      var h = document.createElement("h4"); h.textContent=bd.emoji+" "+bd.label;
+      var itemsWrap = document.createElement("div"); itemsWrap.className="sort-bin-items";
+      bin.appendChild(h); bin.appendChild(itemsWrap); bins.appendChild(bin);
+      binEls[bd.key] = {bin:bin, itemsWrap:itemsWrap};
+      binList.push(bin);
+    });
+
+    var mistakes = 0;
+    var remaining = t.items.length;
+
+    function finishIfDone(){
+      if(remaining<=0){
+        var ok = mistakes===0;
+        ok? soundCorrect() : soundWrong();
+        recordResult(ok, t.q, t.explain);
+        showFeedback(ok, ok?"Все улики на месте!":"Задание выполнено (с подсказками)", t.explain);
+        showNext();
+      }
+    }
+
+    function flashBinBad(bin){
+      bin.classList.add("flash-bad");
+      setTimeout(function(){ bin.classList.remove("flash-bad"); },400);
+    }
+
+    t.items.forEach(function(item){
+      var chip = document.createElement("div");
+      chip.className = "drag-chip";
+      chip.textContent = item.text;
+      pool.appendChild(chip);
+
+      chip.addEventListener("pointerdown", function(e){
+        e.preventDefault();
+        try{ chip.setPointerCapture(e.pointerId); }catch(err){}
+        var startX = e.clientX, startY = e.clientY;
+        chip.classList.add("dragging");
+
+        function onMove(ev){
+          var dx = ev.clientX-startX, dy = ev.clientY-startY;
+          chip.style.transform = "translate("+dx+"px,"+dy+"px)";
+          chip.style.pointerEvents = "none";
+          var el = document.elementFromPoint(ev.clientX, ev.clientY);
+          var bin = el && el.closest ? el.closest(".sort-bin") : null;
+          binList.forEach(function(b){ b.classList.remove("hover"); });
+          if(bin) bin.classList.add("hover");
+        }
+        function onUp(ev){
+          chip.removeEventListener("pointermove", onMove);
+          chip.removeEventListener("pointerup", onUp);
+          try{ chip.releasePointerCapture(ev.pointerId); }catch(err){}
+          chip.classList.remove("dragging");
+          chip.style.pointerEvents = "";
+          var el = document.elementFromPoint(ev.clientX, ev.clientY);
+          var bin = el && el.closest ? el.closest(".sort-bin") : null;
+          binList.forEach(function(b){ b.classList.remove("hover"); });
+
+          if(bin && bin.dataset.key===item.bin){
+            soundCorrect();
+            var line = document.createElement("div");
+            line.className="sort-bin-item";
+            line.textContent = "✓ "+item.text;
+            binEls[bin.dataset.key].itemsWrap.appendChild(line);
+            chip.classList.add("placed");
+            remaining--;
+            finishIfDone();
+          } else {
+            if(bin){ mistakes++; soundWrong(); flashBinBad(bin); }
+            chip.style.transition = "transform .25s ease";
+            chip.style.transform = "translate(0,0)";
+            setTimeout(function(){ chip.style.transition=""; },250);
+          }
+        }
+        chip.addEventListener("pointermove", onMove);
+        chip.addEventListener("pointerup", onUp);
+      });
+    });
+  }
+
+  /* ---- СООТВЕТСТВИЕ ---- */
+  function shuffle(arr){
+    var a=arr.slice();
+    for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var tmp=a[i]; a[i]=a[j]; a[j]=tmp; }
+    return a;
+  }
+  function renderMatch(t){
+    var body=$("task-body");
+    var wrap=document.createElement("div"); wrap.className="match-cols";
+    var colLeft=document.createElement("div"); colLeft.className="match-col";
+    var colRight=document.createElement("div"); colRight.className="match-col";
+    wrap.appendChild(colLeft); wrap.appendChild(colRight); body.appendChild(wrap);
+
+    var rightShuffled = shuffle(t.pairs.map(function(p,i){return {text:p.right, pairIdx:i};}));
+    var leftBtns=[]; var selectedLeft=null; var mistakes=0; var matchedCount=0;
+
+    t.pairs.forEach(function(p,i){
+      var b=document.createElement("button"); b.className="match-btn"; b.textContent=p.left; b.dataset.pairIdx=i;
+      colLeft.appendChild(b); leftBtns.push(b);
+      b.addEventListener("click", function(){
+        if(b.classList.contains("matched")) return;
+        leftBtns.forEach(function(x){x.classList.remove("selected");});
+        b.classList.add("selected"); selectedLeft=b;
+      });
+    });
+    rightShuffled.forEach(function(r){
+      var b=document.createElement("button"); b.className="match-btn"; b.textContent=r.text; b.dataset.pairIdx=r.pairIdx;
+      colRight.appendChild(b);
+      b.addEventListener("click", function(){
+        if(!selectedLeft || b.classList.contains("matched")) return;
+        var li=parseInt(selectedLeft.dataset.pairIdx,10), ri=parseInt(b.dataset.pairIdx,10);
+        if(li===ri){
+          soundCorrect();
+          selectedLeft.classList.add("matched"); selectedLeft.classList.remove("selected");
+          b.classList.add("matched"); selectedLeft=null; matchedCount++;
+          if(matchedCount>=t.pairs.length){
+            var ok = mistakes===0;
+            recordResult(ok,t.q,t.explain);
+            showFeedback(ok, ok?"Все пары верны!":"Задание выполнено (с подсказками)", t.explain);
+            showNext();
+          }
+        } else {
+          soundWrong(); mistakes++;
+          b.classList.add("flash-red","shake"); selectedLeft.classList.add("shake");
+          setTimeout(function(){
+            b.classList.remove("flash-red","shake");
+            if(selectedLeft) selectedLeft.classList.remove("shake","selected");
+            selectedLeft=null;
+          },400);
+        }
+      });
+    });
+  }
+
+  /* ---- ДИАЛОГ-КВЕСТ ---- */
+  function renderDialog(t){
+    var body=$("task-body");
+    var win=document.createElement("div"); win.className="chat-window";
+
+    var contact=document.createElement("div"); contact.className="chat-contact";
+    contact.innerHTML="<span class='av'>"+t.avatar+"</span><b>"+t.contact+"</b>";
+    win.appendChild(contact);
+
+    var inBubble=document.createElement("div"); inBubble.className="chat-bubble in"; inBubble.textContent=t.message;
+    win.appendChild(inBubble);
+
+    var optsWrap=document.createElement("div"); optsWrap.className="chat-options";
+    var buttons=[];
+    t.options.forEach(function(opt,i){
+      var b=document.createElement("button"); b.className="chat-opt-btn"; b.textContent=opt;
+      optsWrap.appendChild(b); buttons.push(b);
+      b.addEventListener("click", function(){
+        buttons.forEach(function(bb){bb.disabled=true;});
+        var outBubble=document.createElement("div"); outBubble.className="chat-bubble out"; outBubble.textContent=opt;
+        win.insertBefore(outBubble, optsWrap);
+        var ok = (i===t.correct);
+        ok? soundCorrect() : soundWrong();
+        recordResult(ok, t.message, t.explain);
+        showFeedback(ok, ok?"Правильная реплика!":"Лучший ответ: «"+t.options[t.correct]+"»", t.explain);
+        showNext();
+      });
+    });
+    win.appendChild(optsWrap);
+    body.appendChild(win);
+  }
+
+  /* ==================== ЗАВЕРШЕНИЕ ==================== */
+  function calcGrade(score){
+    if(score>=28) return 10;
+    if(score>=26) return 9;
+    if(score>=23) return 8;
+    if(score>=20) return 7;
+    if(score>=17) return 6;
+    if(score>=14) return 5;
+    if(score>=12) return 4;
+    if(score>=8)  return 3;
+    if(score>=4)  return 2;
+    return 1;
+  }
+  function finishGame(){
+    if(state.timerId) clearInterval(state.timerId);
+    var score = state.results.filter(function(r){return r && r.correct;}).length;
+    var total = TASKS.length;
+    var percent = Math.round((score/total)*100);
+    var grade = calcGrade(score);
+
+    $("result-grade").textContent = grade;
+    $("stat-correct").textContent = score;
+    $("stat-percent").textContent = percent+"%";
+    $("stat-total").textContent = total;
+
+    var title, msg;
+    if(grade>=9){ title="Дело раскрыто! 🏆"; msg="Ты — настоящий цифровой детектив и отлично знаешь правила безопасности в сети!"; }
+    else if(grade>=7){ title="Хорошая работа, детектив! 👍"; msg="Ты нашёл большинство улик. Немного практики — и дело будет раскрыто идеально!"; }
+    else if(grade>=4){ title="Дело почти раскрыто 🙂"; msg="Посмотри разбор ложных следов — так будет проще запомнить правила."; }
+    else { title="Нужно продолжить расследование 📁"; msg="Не переживай! Посмотри ошибки и попробуй пройти миссию ещё раз."; }
+    $("result-title").textContent=title; $("result-msg").textContent=msg;
+    showScreen("result");
+  }
+
+  function renderErrors(){
+    var list=$("errors-list"); list.innerHTML="";
+    var wrong = state.results.filter(function(r){return r && !r.correct;});
+    if(wrong.length===0){
+      var div=document.createElement("div"); div.className="no-errors";
+      div.textContent="Ложных следов нет — все улики найдены верно! 🎉";
+      list.appendChild(div); return;
+    }
+    wrong.forEach(function(r){
+      var item=document.createElement("div"); item.className="error-item";
+      item.innerHTML = "<div class='eb-level'>"+r.level+"</div><div class='eb-q'>"+r.q+"</div><div class='eb-a'>💡 "+r.explain+"</div>";
+      list.appendChild(item);
+    });
+  }
+
+})();
+</script>
+</body>
+</html>
